@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@iconify/vue": "^5.0.0",
     "fastrx": "^3.3.2",
     "naive-ui": "^2.42.0",
     "vue": "^3.5.13",

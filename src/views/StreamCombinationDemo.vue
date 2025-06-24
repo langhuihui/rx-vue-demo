@@ -3,7 +3,7 @@
     <n-card>
       <template #header>
         <n-space align="center">
-          <n-icon size="24">🔗</n-icon>
+          <Icon icon="mdi:link-variant" size="24" />
           <span>流组合演示</span>
         </n-space>
       </template>
@@ -138,20 +138,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, reactive, onMounted, onUnmounted } from "vue";
+import { Icon } from "@iconify/vue";
 import {
   NSpace,
   NCard,
   NGrid,
   NGridItem,
-  NSelect,
-  NButton,
+  NForm,
   NFormItem,
   NInputNumber,
-  NDivider,
-  NTag,
+  NSelect,
+  NButton,
   NText,
   NIcon,
+  NDivider,
+  NTag,
 } from "naive-ui";
 import { useStreamCombination } from "../composables/useStreamCombination";
 

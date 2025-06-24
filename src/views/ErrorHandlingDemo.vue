@@ -3,12 +3,13 @@
     <n-card>
       <template #header>
         <n-space align="center">
-          <n-icon size="24">🛡️</n-icon>
+          <Icon icon="mdi:shield-check" size="24" />
           <span>错误处理演示</span>
         </n-space>
       </template>
       <n-text>
-        演示 FastRx 中的错误处理机制，包括 catchError、retry、finalize 等错误恢复操作符。
+        演示 FastRx 中的错误处理机制，包括 catchError、retry、finalize
+        等错误恢复操作符。
       </n-text>
     </n-card>
 
@@ -21,9 +22,9 @@
               :options="errorHandlerOptions"
               placeholder="选择错误处理方式"
             />
-            
+
             <n-divider />
-            
+
             <n-form-item label="错误率 (%)">
               <n-slider
                 v-model:value="errorRate"
@@ -33,7 +34,7 @@
                 :format-tooltip="(value) => `${value}%`"
               />
             </n-form-item>
-            
+
             <n-form-item label="重试次数">
               <n-input-number
                 v-model:value="retryCount"
@@ -42,7 +43,7 @@
                 style="width: 100%"
               />
             </n-form-item>
-            
+
             <n-form-item label="数据间隔 (ms)">
               <n-input-number
                 v-model:value="dataInterval"
@@ -52,18 +53,21 @@
                 style="width: 100%"
               />
             </n-form-item>
-            
-            <n-button type="primary" @click="startDemo" :loading="isRunning" block>
-              {{ isRunning ? '运行中...' : '开始演示' }}
+
+            <n-button
+              type="primary"
+              @click="startDemo"
+              :loading="isRunning"
+              block
+            >
+              {{ isRunning ? "运行中..." : "开始演示" }}
             </n-button>
-            
+
             <n-button @click="stopDemo" :disabled="!isRunning" block>
               停止演示
             </n-button>
-            
-            <n-button @click="clearResults" block>
-              清空结果
-            </n-button>
+
+            <n-button @click="clearResults" block> 清空结果 </n-button>
           </n-space>
         </n-card>
       </n-grid-item>
@@ -72,7 +76,11 @@
         <n-space vertical :size="16">
           <n-card title="错误处理流程">
             <div class="error-flow-container">
-              <div class="flow-step" v-for="step in errorFlowSteps" :key="step.id">
+              <div
+                class="flow-step"
+                v-for="step in errorFlowSteps"
+                :key="step.id"
+              >
                 <div class="step-icon" :class="step.status">
                   {{ step.icon }}
                 </div>
@@ -100,7 +108,7 @@
                 </div>
               </n-card>
             </n-grid-item>
-            
+
             <n-grid-item>
               <n-card title="错误信息">
                 <div class="data-list">
@@ -132,7 +140,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { Icon } from "@iconify/vue";
 import {
   NSpace,
   NCard,
@@ -147,131 +156,138 @@ import {
   NTag,
   NStatistic,
   NText,
-  NIcon
-} from 'naive-ui'
-import { useErrorHandling } from '../composables/useErrorHandling'
+  NIcon,
+} from "naive-ui";
+import { useErrorHandling } from "../composables/useErrorHandling";
 
-const selectedErrorHandler = ref<string>('')
-const errorRate = ref(30)
-const retryCount = ref(3)
-const dataInterval = ref(1000)
-const isRunning = ref(false)
+const selectedErrorHandler = ref<string>("");
+const errorRate = ref(30);
+const retryCount = ref(3);
+const dataInterval = ref(1000);
+const isRunning = ref(false);
 
 const errorHandlerOptions = [
-  { label: 'catchError - 捕获错误', value: 'catchError' },
-  { label: 'retry - 重试', value: 'retry' },
-  { label: 'retryWhen - 条件重试', value: 'retryWhen' },
-  { label: 'finalize - 最终处理', value: 'finalize' },
-  { label: 'onErrorResumeNext - 错误恢复', value: 'onErrorResumeNext' }
-]
+  { label: "catchError - 捕获错误", value: "catchError" },
+  { label: "retry - 重试", value: "retry" },
+  { label: "retryWhen - 条件重试", value: "retryWhen" },
+  { label: "finalize - 最终处理", value: "finalize" },
+  { label: "onErrorResumeNext - 错误恢复", value: "onErrorResumeNext" },
+];
 
-const errorFlowSteps = ref<any[]>([])
-const successData = ref<any[]>([])
-const errorData = ref<any[]>([])
-const totalCount = ref(0)
-const successCount = ref(0)
-const errorCount = ref(0)
+const errorFlowSteps = ref<any[]>([]);
+const successData = ref<any[]>([]);
+const errorData = ref<any[]>([]);
+const totalCount = ref(0);
+const successCount = ref(0);
+const errorCount = ref(0);
 
 const successRate = computed(() => {
-  return totalCount.value > 0 ? Math.round((successCount.value / totalCount.value) * 100) : 0
-})
+  return totalCount.value > 0
+    ? Math.round((successCount.value / totalCount.value) * 100)
+    : 0;
+});
 
-const { startErrorHandling, stopErrorHandling } = useErrorHandling()
+const { startErrorHandling, stopErrorHandling } = useErrorHandling();
 
-const addFlowStep = (icon: string, title: string, description: string, status: string) => {
-  const timestamp = new Date().toLocaleTimeString()
+const addFlowStep = (
+  icon: string,
+  title: string,
+  description: string,
+  status: string
+) => {
+  const timestamp = new Date().toLocaleTimeString();
   errorFlowSteps.value.unshift({
     id: Date.now() + Math.random(),
     icon,
     title,
     description,
     timestamp,
-    status
-  })
-  
+    status,
+  });
+
   if (errorFlowSteps.value.length > 10) {
-    errorFlowSteps.value.pop()
+    errorFlowSteps.value.pop();
   }
-}
+};
 
 const addSuccessData = (value: any) => {
-  const timestamp = new Date().toLocaleTimeString()
+  const timestamp = new Date().toLocaleTimeString();
   successData.value.unshift({
     id: Date.now() + Math.random(),
     value,
-    timestamp
-  })
-  
+    timestamp,
+  });
+
   if (successData.value.length > 20) {
-    successData.value.pop()
+    successData.value.pop();
   }
-  
-  successCount.value++
-}
+
+  successCount.value++;
+};
 
 const addErrorData = (message: string) => {
-  const timestamp = new Date().toLocaleTimeString()
+  const timestamp = new Date().toLocaleTimeString();
   errorData.value.unshift({
     id: Date.now() + Math.random(),
     message,
-    timestamp
-  })
-  
+    timestamp,
+  });
+
   if (errorData.value.length > 20) {
-    errorData.value.pop()
+    errorData.value.pop();
   }
-  
-  errorCount.value++
-}
+
+  errorCount.value++;
+};
 
 const startDemo = () => {
-  if (!selectedErrorHandler.value) return
-  
-  isRunning.value = true
-  
+  if (!selectedErrorHandler.value) return;
+
+  isRunning.value = true;
+
   startErrorHandling(
     selectedErrorHandler.value,
     {
       errorRate: errorRate.value,
       retryCount: retryCount.value,
-      dataInterval: dataInterval.value
+      dataInterval: dataInterval.value,
     },
     {
       onData: (value) => {
-        totalCount.value++
-        addFlowStep('📊', '数据处理', `处理数据: ${value}`, 'processing')
+        totalCount.value++;
+        addFlowStep("📊", "数据处理", `处理数据: ${value}`, "processing");
       },
       onSuccess: (value) => {
-        addSuccessData(value)
-        addFlowStep('✅', '处理成功', `成功处理: ${value}`, 'success')
+        addSuccessData(value);
+        addFlowStep("✅", "处理成功", `成功处理: ${value}`, "success");
       },
       onError: (error) => {
-        addErrorData(error.message)
-        addFlowStep('❌', '处理错误', error.message, 'error')
+        addErrorData(error.message);
+        addFlowStep("❌", "处理错误", error.message, "error");
       },
       onRetry: (attempt) => {
-        addFlowStep('🔄', '重试处理', `第 ${attempt} 次重试`, 'retry')
+        addFlowStep("🔄", "重试处理", `第 ${attempt} 次重试`, "retry");
       },
       onRecover: (value) => {
-        addFlowStep('🛡️', '错误恢复', `恢复处理: ${value}`, 'recover')
-      }
+        addFlowStep("🛡️", "错误恢复", `恢复处理: ${value}`, "recover");
+      },
     }
-  )
-}
+  );
+};
 
 const stopDemo = () => {
-  isRunning.value = false
-  stopErrorHandling()
-}
+  isRunning.value = false;
+  stopErrorHandling();
+};
 
 const clearResults = () => {
-  errorFlowSteps.value = []
-  successData.value = []
-  errorData.value = []
-  totalCount.value = 0
-  successCount.value = 0
-  errorCount.value = 0
-}
+  errorFlowSteps.value = [];
+  successData.value = [];
+  errorData.value = [];
+  totalCount.value = 0;
+  successCount.value = 0;
+  errorCount.value = 0;
+};
 </script>
 
 <style scoped>

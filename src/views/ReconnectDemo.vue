@@ -1,6 +1,9 @@
 <template>
   <div class="reconnect-demo">
-    <h1>重连逻辑演示</h1>
+    <h1>
+      <Icon icon="mdi:connection" style="margin-right: 8px" />
+      重连逻辑演示
+    </h1>
 
     <div class="status-section">
       <h2>连接状态</h2>
@@ -18,14 +21,52 @@
       <h2>控制面板</h2>
       <div class="button-group">
         <button @click="handleConnect" :disabled="isConnected">连接</button>
-        <button @click="handleDisconnect" :disabled="!isConnected">
-          断开连接
-        </button>
         <button @click="handleSimulateDisconnect" :disabled="!isConnected">
           模拟网络断开
         </button>
         <button @click="handleLeave" :disabled="!isConnected">离开频道</button>
       </div>
+    </div>
+
+    <!-- 时间轴动画 -->
+    <div class="timeline-section">
+      <h2>重连事件时间轴</h2>
+      <div class="timeline-container">
+        <div class="timeline" ref="timelineRef">
+          <div class="timeline-ruler">
+            <div
+              class="time-mark"
+              v-for="i in 16"
+              :key="i"
+              :style="{ left: (i - 1) * 100 + 20 + 'px' }"
+            >
+              {{ (i - 1) * 2 }}s
+            </div>
+          </div>
+          <div class="events-track">
+            <div
+              v-for="event in timelineEvents"
+              :key="event.id"
+              :class="['event-item', event.type]"
+              :style="{
+                left: event.position + 'px',
+                top: getEventTop(event.type) + 'px',
+              }"
+              :title="`${(event.time / 1000).toFixed(1)}s: ${event.text}`"
+            >
+              {{ event.text }}
+            </div>
+          </div>
+          <div
+            class="timeline-cursor"
+            :class="{ active: isAnimating }"
+            :style="{ left: cursorPosition + 'px' }"
+          ></div>
+        </div>
+      </div>
+      <button @click="clearTimeline" class="clear-btn" style="margin-top: 10px">
+        清空时间轴
+      </button>
     </div>
 
     <div class="log-section">
@@ -105,7 +146,8 @@ pipe(
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, onMounted, onUnmounted } from "vue";
+import { Icon } from "@iconify/vue";
 import {
   useReconnectLogic,
   ConnectionState,
@@ -119,7 +161,6 @@ const {
   lastReconnectTime,
   isConnected,
   connect,
-  disconnect,
   simulateDisconnect,
   leave,
   reconnectManager,
@@ -138,6 +179,15 @@ const logs = ref<
     type: "info" | "success" | "error" | "warning";
   }>
 >([]);
+
+// 时间轴动画相关
+const timelineEvents = ref<any[]>([]);
+const cursorPosition = ref(20);
+const isReconnecting = ref(false);
+const isAnimating = ref(false);
+const timelineRef = ref<HTMLElement>();
+let animationId: number | null = null;
+let timelineStartTime: number | null = null;
 
 // 添加日志
 const addLog = (
@@ -177,33 +227,110 @@ const updateSettings = () => {
   );
 };
 
-// 重写连接方法，添加日志
-const handleConnect = async () => {
-  addLog("开始连接...", "info");
-  try {
-    await connect();
-    addLog("连接成功", "success");
-  } catch (error) {
-    addLog(`连接失败: ${error}`, "error");
+// 时间轴动画相关函数
+const getEventTop = (type: string) => {
+  switch (type) {
+    case "connect":
+      return 20;
+    case "disconnect":
+      return 60;
+    case "reconnect":
+      return 100;
+    case "success":
+      return 20;
+    case "error":
+      return 20;
+    case "leave":
+      return 140;
+    default:
+      return 20;
   }
 };
 
-// 重写断开方法，添加日志
-const handleDisconnect = () => {
-  disconnect();
-  addLog("主动断开连接", "warning");
+const addTimelineEvent = (type: string, text: string, timeMs: number) => {
+  const position = (timeMs / 1000) * 50 + 20;
+  timelineEvents.value.push({
+    id: Date.now() + Math.random(),
+    type,
+    text,
+    time: timeMs,
+    position,
+  });
 };
 
-// 重写模拟断开方法，添加日志
+const startTimelineAnimation = () => {
+  timelineStartTime = Date.now();
+  isAnimating.value = true;
+
+  const animate = () => {
+    if (!timelineStartTime || !isAnimating.value) return;
+
+    const elapsed = Date.now() - timelineStartTime;
+    const position = (elapsed / 1000) * 50 + 20;
+    cursorPosition.value = position;
+
+    if (isAnimating.value) {
+      animationId = requestAnimationFrame(animate);
+    }
+  };
+
+  animate();
+};
+
+const stopTimelineAnimation = () => {
+  if (animationId) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
+  }
+  isAnimating.value = false;
+};
+
+const clearTimeline = () => {
+  timelineEvents.value = [];
+  cursorPosition.value = 20;
+  timelineStartTime = null;
+  stopTimelineAnimation();
+};
+
+// 重写连接方法，添加日志和动画
+const handleConnect = async () => {
+  addLog("开始连接...", "info");
+  clearTimeline();
+  addTimelineEvent("connect", "开始连接", 0);
+  startTimelineAnimation(); // 连接时开始动画
+
+  try {
+    await connect();
+    addLog("连接成功", "success");
+    const currentTime = timelineStartTime ? Date.now() - timelineStartTime : 0;
+    addTimelineEvent("success", "连接成功", currentTime);
+  } catch (error) {
+    addLog(`连接失败: ${error}`, "error");
+    const currentTime = timelineStartTime ? Date.now() - timelineStartTime : 0;
+    addTimelineEvent("error", "连接失败", currentTime);
+  }
+};
+
+// 重写模拟断开方法，添加日志和动画
 const handleSimulateDisconnect = () => {
   simulateDisconnect();
   addLog("网络连接断开", "error");
+  const currentTime = timelineStartTime ? Date.now() - timelineStartTime : 0;
+  addTimelineEvent("disconnect", "网络断开", currentTime);
+
+  // 开始重连动画
+  isReconnecting.value = true;
+  // 动画已经在运行，不需要重新开始
 };
 
-// 重写离开方法，添加日志
+// 重写离开方法，添加日志和动画
 const handleLeave = () => {
   leave();
   addLog("离开频道", "info");
+  const currentTime = timelineStartTime ? Date.now() - timelineStartTime : 0;
+  addTimelineEvent("leave", "离开频道", currentTime);
+  isReconnecting.value = false;
+  stopTimelineAnimation(); // 离开时停止动画
 };
 
 // 清空日志
@@ -211,7 +338,7 @@ const clearLogs = () => {
   logs.value = [];
 };
 
-// 监听状态变化，添加日志
+// 监听状态变化，添加日志和动画
 watch(connectionState, (newState, oldState) => {
   if (newState !== oldState) {
     switch (newState) {
@@ -220,12 +347,23 @@ watch(connectionState, (newState, oldState) => {
         break;
       case ConnectionState.CONNECTED:
         addLog("状态变化: 连接成功", "success");
+        if (oldState === ConnectionState.RECONNECTING) {
+          const currentTime = timelineStartTime
+            ? Date.now() - timelineStartTime
+            : 0;
+          console.log(`重连成功事件: 时间: ${currentTime}ms`);
+          addTimelineEvent("success", "重连成功", currentTime);
+        }
+        isReconnecting.value = false;
+        // 不停止动画，让动画继续运行
         break;
       case ConnectionState.DISCONNECTED:
         addLog("状态变化: 连接断开", "error");
         break;
       case ConnectionState.RECONNECTING:
         addLog("状态变化: 开始重连", "warning");
+        isReconnecting.value = true;
+        // 动画已经在运行，不需要重新开始
         break;
     }
   }
@@ -235,6 +373,9 @@ watch(connectionState, (newState, oldState) => {
 watch(reconnectCount, (newCount, oldCount) => {
   if (newCount > oldCount) {
     addLog(`重连尝试: 第${newCount}次`, "warning");
+    const currentTime = timelineStartTime ? Date.now() - timelineStartTime : 0;
+    console.log(`添加重连事件: 第${newCount}次, 时间: ${currentTime}ms`);
+    addTimelineEvent("reconnect", `重连 #${newCount}`, currentTime);
   }
 });
 
@@ -242,13 +383,31 @@ watch(reconnectCount, (newCount, oldCount) => {
 watch(totalAttempts, (newTotal, oldTotal) => {
   if (newTotal > oldTotal) {
     addLog(`总重连次数: ${newTotal}`, "info");
+    console.log(`总重连次数更新: ${newTotal}`);
+
+    // 检查是否达到最大重连次数
+    if (newTotal >= maxReconnectAttempts.value) {
+      const currentTime = timelineStartTime
+        ? Date.now() - timelineStartTime
+        : 0;
+      console.log(`重连失败事件: 达到最大重连次数, 时间: ${currentTime}ms`);
+      addTimelineEvent("error", "重连失败", currentTime);
+    }
   }
+});
+
+onMounted(() => {
+  addLog("重连演示系统就绪", "info");
+});
+
+onUnmounted(() => {
+  stopTimelineAnimation();
 });
 </script>
 
 <style scoped>
 .reconnect-demo {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
   font-family: Arial, sans-serif;
@@ -258,7 +417,8 @@ watch(totalAttempts, (newTotal, oldTotal) => {
 .controls-section,
 .log-section,
 .settings-section,
-.code-section {
+.code-section,
+.timeline-section {
   margin-bottom: 30px;
   padding: 20px;
   border: 1px solid #ddd;
@@ -351,6 +511,108 @@ watch(totalAttempts, (newTotal, oldTotal) => {
   background-color: #ccc;
   color: #666;
   cursor: not-allowed;
+}
+
+/* 时间轴样式 */
+.timeline-container {
+  height: 200px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.timeline {
+  position: relative;
+  height: 200px;
+  min-width: 800px;
+  width: max-content; /* 让宽度自适应内容 */
+  background: linear-gradient(90deg, #f1f5f9 0%, #f8fafc 100%);
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.timeline-ruler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: #f8fafc;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+}
+
+.time-mark {
+  position: absolute;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.events-track {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20px;
+}
+
+.timeline-cursor {
+  position: absolute;
+  top: 30px;
+  width: 2px;
+  height: calc(100% - 30px);
+  background: #3b82f6;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.timeline-cursor.active {
+  opacity: 1;
+  animation: pulse 1s infinite;
+}
+
+.event-item {
+  position: absolute;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+  min-width: 80px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.event-item:hover {
+  transform: translateY(-2px);
+}
+
+.event-item.connect {
+  background: #3b82f6;
+}
+
+.event-item.disconnect {
+  background: #ef4444;
+}
+
+.event-item.reconnect {
+  background: #f59e0b;
+}
+
+.event-item.success {
+  background: #10b981;
+}
+
+.event-item.error {
+  background: #ef4444;
+}
+
+.event-item.leave {
+  background: #8b5cf6;
 }
 
 .log-container {
@@ -458,6 +720,9 @@ h1 {
   color: #333;
   text-align: center;
   margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 h2 {
