@@ -88,7 +88,6 @@ export class ReconnectManagerImpl implements ReconnectManager {
           mcTimeout(this.reconnectInterval), // Wait based on retry count
           switchMapTo(reconnectOB) // Attempt reconnection
         )),
-        take(this.maxReconnectAttempts + 1) // Limit retry attempts
       )),
       takeUntil(this.signalChannel.leaveOB), // Stop if channel is reinitialized
       subscribe() // Execute the observable

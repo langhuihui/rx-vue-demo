@@ -380,21 +380,21 @@ watch(reconnectCount, (newCount, oldCount) => {
 });
 
 // 监听总尝试次数变化
-watch(totalAttempts, (newTotal, oldTotal) => {
-  if (newTotal > oldTotal) {
-    addLog(`总重连次数: ${newTotal}`, "info");
-    console.log(`总重连次数更新: ${newTotal}`);
+// watch(totalAttempts, (newTotal, oldTotal) => {
+//   if (newTotal > oldTotal) {
+//     addLog(`总重连次数: ${newTotal}`, "info");
+//     console.log(`总重连次数更新: ${newTotal}`);
 
-    // 检查是否达到最大重连次数
-    if (newTotal >= maxReconnectAttempts.value) {
-      const currentTime = timelineStartTime
-        ? Date.now() - timelineStartTime
-        : 0;
-      console.log(`重连失败事件: 达到最大重连次数, 时间: ${currentTime}ms`);
-      addTimelineEvent("error", "重连失败", currentTime);
-    }
-  }
-});
+//     // 检查是否达到最大重连次数
+//     if (newTotal >= maxReconnectAttempts.value) {
+//       const currentTime = timelineStartTime
+//         ? Date.now() - timelineStartTime
+//         : 0;
+//       console.log(`重连失败事件: 达到最大重连次数, 时间: ${currentTime}ms`);
+//       addTimelineEvent("error", "重连失败", currentTime);
+//     }
+//   }
+// });
 
 onMounted(() => {
   addLog("重连演示系统就绪", "info");
