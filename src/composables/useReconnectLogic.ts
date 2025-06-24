@@ -1,19 +1,21 @@
 import { ref, reactive, onUnmounted } from 'vue';
 import { expand, pipe, subscribe, switchMapTo, take, takeUntil, tap, switchMap, timer, subject } from 'fastrx';
 
-// 连接状态枚举
-export enum ConnectionState {
-  DISCONNECTED = 'disconnected',
-  CONNECTING = 'connecting',
-  CONNECTED = 'connected',
-  RECONNECTING = 'reconnecting'
-}
+// 连接状态常量
+export const ConnectionState = {
+  DISCONNECTED: 'disconnected',
+  CONNECTING: 'connecting',
+  CONNECTED: 'connected',
+  RECONNECTING: 'reconnecting'
+} as const;
+
+export type ConnectionStateType = typeof ConnectionState[keyof typeof ConnectionState];
 
 // 重连管理器接口
 export interface ReconnectManager {
   init(): Promise<void>;
   destroy(): void;
-  getConnectionState(): ConnectionState;
+  getConnectionState(): ConnectionStateType;
   getReconnectCount(): number;
   getTotalAttempts(): number;
   getLastReconnectTime(): string | null;
@@ -21,7 +23,11 @@ export interface ReconnectManager {
 
 // 信号通道接口（模拟TRTC的信号通道）
 export interface SignalChannel {
-  connection: any; // 模拟原始代码中的connection对象
+  connection: {
+    state: ConnectionStateType;
+    disconnectSubject: any;
+    emit: (event: string) => void;
+  }; // 模拟原始代码中的connection对象
   connOB: any;
   leaveOB: any;
   reconnect(): Promise<void>;
@@ -37,7 +43,7 @@ function mcTimeout(duration: number) {
 // 重连管理器实现
 export class ReconnectManagerImpl implements ReconnectManager {
   private signalChannel: SignalChannel;
-  private connectionState = ref<ConnectionState>(ConnectionState.DISCONNECTED);
+  private connectionState = ref<ConnectionStateType>(ConnectionState.DISCONNECTED);
   private reconnectCount = ref(0);
   private totalAttempts = ref(0);
   private lastReconnectTime = ref<string | null>(null);
@@ -96,7 +102,7 @@ export class ReconnectManagerImpl implements ReconnectManager {
     }
   }
 
-  getConnectionState(): ConnectionState {
+  getConnectionState(): ConnectionStateType {
     return this.connectionState.value;
   }
 
@@ -130,16 +136,16 @@ export class ReconnectManagerImpl implements ReconnectManager {
 // 创建模拟的信号通道
 export function createMockSignalChannel(): SignalChannel {
   // 创建断开连接的subject
-  const disconnectSubject = subject<ConnectionState>();
+  const disconnectSubject = subject<ConnectionStateType>();
   // 创建离开频道的subject
   const leaveSubject = subject<void>();
 
   // 创建一个可以发送事件的connection对象
   const connection = reactive({
-    state: ConnectionState.DISCONNECTED,
+    state: ConnectionState.DISCONNECTED as ConnectionStateType,
     disconnectSubject, // 用于发送断开事件
     // 添加事件发射器功能
-    emit: (event: string, data?: any) => {
+    emit: (event: string) => {
       // 模拟事件发射
       if (event === ConnectionState.DISCONNECTED) {
         connection.state = ConnectionState.DISCONNECTED;
@@ -198,7 +204,7 @@ export function useReconnectLogic() {
   const signalChannel = createMockSignalChannel();
   const reconnectManager = new ReconnectManagerImpl(signalChannel);
 
-  const connectionState = ref<ConnectionState>(ConnectionState.DISCONNECTED);
+  const connectionState = ref<ConnectionStateType>(ConnectionState.DISCONNECTED);
   const reconnectCount = ref(0);
   const totalAttempts = ref(0);
   const lastReconnectTime = ref<string | null>(null);

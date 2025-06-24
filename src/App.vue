@@ -83,7 +83,6 @@ import {
   NSpace,
   NSwitch,
   NButton,
-  NIcon,
   darkTheme,
   type MenuOption,
 } from "naive-ui";

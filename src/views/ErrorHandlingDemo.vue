@@ -140,7 +140,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed } from "vue";
 import { Icon } from "@iconify/vue";
 import {
   NSpace,
@@ -156,7 +156,6 @@ import {
   NTag,
   NStatistic,
   NText,
-  NIcon,
 } from "naive-ui";
 import { useErrorHandling } from "../composables/useErrorHandling";
 

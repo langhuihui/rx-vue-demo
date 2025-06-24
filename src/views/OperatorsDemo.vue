@@ -140,20 +140,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from "vue";
+import { ref } from "vue";
 import { Icon } from "@iconify/vue";
 import {
   NSpace,
   NCard,
   NGrid,
   NGridItem,
-  NForm,
   NFormItem,
   NInputNumber,
   NSelect,
   NButton,
   NText,
-  NIcon,
   NDivider,
   NTag,
 } from "naive-ui";
