@@ -8,7 +8,8 @@
         </n-space>
       </template>
       <n-text>
-        演示多个数据流的组合操作，包括 merge、concat、zip、combineLatest 等组合操作符。
+        演示多个数据流的组合操作，包括 merge、concat、zip、combineLatest
+        等组合操作符。
       </n-text>
     </n-card>
 
@@ -21,9 +22,9 @@
               :options="combinationOptions"
               placeholder="选择组合操作"
             />
-            
+
             <n-divider />
-            
+
             <n-form-item label="流A间隔 (ms)">
               <n-input-number
                 v-model:value="streamAInterval"
@@ -33,7 +34,7 @@
                 style="width: 100%"
               />
             </n-form-item>
-            
+
             <n-form-item label="流B间隔 (ms)">
               <n-input-number
                 v-model:value="streamBInterval"
@@ -43,18 +44,21 @@
                 style="width: 100%"
               />
             </n-form-item>
-            
-            <n-button type="primary" @click="startDemo" :loading="isRunning" block>
-              {{ isRunning ? '运行中...' : '开始演示' }}
+
+            <n-button
+              type="primary"
+              @click="startDemo"
+              :loading="isRunning"
+              block
+            >
+              {{ isRunning ? "运行中..." : "开始演示" }}
             </n-button>
-            
+
             <n-button @click="stopDemo" :disabled="!isRunning" block>
               停止演示
             </n-button>
-            
-            <n-button @click="clearResults" block>
-              清空结果
-            </n-button>
+
+            <n-button @click="clearResults" block> 清空结果 </n-button>
           </n-space>
         </n-card>
       </n-grid-item>
@@ -76,7 +80,7 @@
                   </div>
                 </div>
               </div>
-              
+
               <div class="stream-row">
                 <div class="stream-label">流B:</div>
                 <div class="stream-line stream-b">
@@ -90,12 +94,12 @@
                   </div>
                 </div>
               </div>
-              
+
               <div class="combination-arrow">
                 <n-icon size="20">⬇️</n-icon>
-                <span>{{ selectedCombination || '选择组合操作' }}</span>
+                <span>{{ selectedCombination || "选择组合操作" }}</span>
               </div>
-              
+
               <div class="stream-row">
                 <div class="stream-label">结果:</div>
                 <div class="stream-line result-stream">
@@ -121,7 +125,9 @@
               >
                 <n-tag type="success">{{ item.timestamp }}</n-tag>
                 <span>{{ item.value }}</span>
-                <n-text depth="3" style="font-size: 12px;">{{ item.description }}</n-text>
+                <n-text depth="3" style="font-size: 12px">{{
+                  item.description
+                }}</n-text>
               </div>
             </div>
           </n-card>
@@ -132,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue";
 import {
   NSpace,
   NCard,
@@ -145,111 +151,107 @@ import {
   NDivider,
   NTag,
   NText,
-  NIcon
-} from 'naive-ui'
-import { useStreamCombination } from '../composables/useStreamCombination'
+  NIcon,
+} from "naive-ui";
+import { useStreamCombination } from "../composables/useStreamCombination";
 
-const selectedCombination = ref<string>('')
-const streamAInterval = ref(1000)
-const streamBInterval = ref(1500)
-const isRunning = ref(false)
+const selectedCombination = ref<string>("");
+const streamAInterval = ref(1000);
+const streamBInterval = ref(1500);
+const isRunning = ref(false);
 
 const combinationOptions = [
-  { label: 'merge - 合并', value: 'merge' },
-  { label: 'concat - 连接', value: 'concat' },
-  { label: 'zip - 压缩', value: 'zip' },
-  { label: 'combineLatest - 组合最新值', value: 'combineLatest' },
-  { label: 'withLatestFrom - 携带最新值', value: 'withLatestFrom' },
-  { label: 'startWith - 以...开始', value: 'startWith' }
-]
+  { label: "merge - 合并", value: "merge" },
+  { label: "concat - 连接", value: "concat" },
+  { label: "zip - 压缩", value: "zip" },
+  { label: "combineLatest - 组合最新值", value: "combineLatest" },
+  { label: "withLatestFrom - 携带最新值", value: "withLatestFrom" },
+  { label: "startWith - 以...开始", value: "startWith" },
+];
 
-const streamAItems = ref<any[]>([])
-const streamBItems = ref<any[]>([])
-const resultItems = ref<any[]>([])
-const resultData = ref<any[]>([])
+const streamAItems = ref<any[]>([]);
+const streamBItems = ref<any[]>([]);
+const resultItems = ref<any[]>([]);
+const resultData = ref<any[]>([]);
 
-const { startCombination, stopCombination } = useStreamCombination()
+const { startCombination, stopCombination } = useStreamCombination();
 
-let streamACounter = 0
-let streamBCounter = 0
-let animationStartTime = 0
+let animationStartTime = 0;
 
 const addStreamAItem = (value: any) => {
-  const id = Date.now() + Math.random()
-  const position = (Date.now() - animationStartTime) / 50 % 600
-  
-  streamAItems.value.push({ id, value, position })
-  
+  const id = Date.now() + Math.random();
+  const position = ((Date.now() - animationStartTime) / 50) % 600;
+
+  streamAItems.value.push({ id, value, position });
+
   setTimeout(() => {
-    streamAItems.value = streamAItems.value.filter(item => item.id !== id)
-  }, 3000)
-}
+    streamAItems.value = streamAItems.value.filter((item) => item.id !== id);
+  }, 3000);
+};
 
 const addStreamBItem = (value: any) => {
-  const id = Date.now() + Math.random()
-  const position = (Date.now() - animationStartTime) / 50 % 600
-  
-  streamBItems.value.push({ id, value, position })
-  
+  const id = Date.now() + Math.random();
+  const position = ((Date.now() - animationStartTime) / 50) % 600;
+
+  streamBItems.value.push({ id, value, position });
+
   setTimeout(() => {
-    streamBItems.value = streamBItems.value.filter(item => item.id !== id)
-  }, 3000)
-}
+    streamBItems.value = streamBItems.value.filter((item) => item.id !== id);
+  }, 3000);
+};
 
 const addResultItem = (value: any, description: string) => {
-  const timestamp = new Date().toLocaleTimeString()
-  const id = Date.now() + Math.random()
-  
+  const timestamp = new Date().toLocaleTimeString();
+  const id = Date.now() + Math.random();
+
   // 添加到数据列表
-  resultData.value.unshift({ id, value, timestamp, description })
-  if (resultData.value.length > 20) resultData.value.pop()
-  
+  resultData.value.unshift({ id, value, timestamp, description });
+  if (resultData.value.length > 20) resultData.value.pop();
+
   // 添加到可视化流
-  const position = (Date.now() - animationStartTime) / 50 % 600
-  resultItems.value.push({ id, value, position })
-  
+  const position = ((Date.now() - animationStartTime) / 50) % 600;
+  resultItems.value.push({ id, value, position });
+
   setTimeout(() => {
-    resultItems.value = resultItems.value.filter(item => item.id !== id)
-  }, 3000)
-}
+    resultItems.value = resultItems.value.filter((item) => item.id !== id);
+  }, 3000);
+};
 
 const startDemo = () => {
-  if (!selectedCombination.value) return
-  
-  isRunning.value = true
-  streamACounter = 0
-  streamBCounter = 0
-  animationStartTime = Date.now()
-  
+  if (!selectedCombination.value) return;
+
+  isRunning.value = true;
+  animationStartTime = Date.now();
+
   startCombination(
     selectedCombination.value,
     streamAInterval.value,
     streamBInterval.value,
     {
       onStreamA: (value) => {
-        addStreamAItem(value)
+        addStreamAItem(value);
       },
       onStreamB: (value) => {
-        addStreamBItem(value)
+        addStreamBItem(value);
       },
       onResult: (value, description) => {
-        addResultItem(value, description)
-      }
+        addResultItem(value, description);
+      },
     }
-  )
-}
+  );
+};
 
 const stopDemo = () => {
-  isRunning.value = false
-  stopCombination()
-}
+  isRunning.value = false;
+  stopCombination();
+};
 
 const clearResults = () => {
-  streamAItems.value = []
-  streamBItems.value = []
-  resultItems.value = []
-  resultData.value = []
-}
+  streamAItems.value = [];
+  streamBItems.value = [];
+  resultItems.value = [];
+  resultData.value = [];
+};
 </script>
 
 <style scoped>

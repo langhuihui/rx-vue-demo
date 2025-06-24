@@ -5,43 +5,42 @@ import {
   map,
   catchError,
   retry,
-  subscribe,
-  timer
-} from 'fastrx'
+  subscribe
+} from 'fastrx';
 
 interface ErrorHandlingOptions {
-  errorRate: number
-  retryCount: number
-  dataInterval: number
+  errorRate: number;
+  retryCount: number;
+  dataInterval: number;
 }
 
 interface ErrorHandlingCallbacks {
-  onData: (value: any) => void
-  onSuccess: (value: any) => void
-  onError: (error: any) => void
-  onRetry: (attempt: number) => void
-  onRecover: (value: any) => void
+  onData: (value: any) => void;
+  onSuccess: (value: any) => void;
+  onError: (error: any) => void;
+  onRetry: (attempt: number) => void;
+  onRecover: (value: any) => void;
 }
 
 export function useErrorHandling() {
-  let dataSubject = subject<number>()
-  let interval: number | null = null
-  let subscription: any = null
+  let dataSubject = subject<number>();
+  let interval: number | null = null;
+  let subscription: any = null;
 
   const startErrorHandling = (
     type: string,
     options: ErrorHandlingOptions,
     callbacks: ErrorHandlingCallbacks
   ) => {
-    dataSubject = subject<number>()
-    let counter = 0
+    dataSubject = subject<number>();
+    let counter = 0;
 
     // 启动数据生成
     interval = setInterval(() => {
-      const value = ++counter
-      callbacks.onData(value)
-      dataSubject.next(value)
-    }, options.dataInterval)
+      const value = ++counter;
+      callbacks.onData(value);
+      dataSubject.next(value);
+    }, options.dataInterval);
 
     // 根据类型设置错误处理
     switch (type) {
@@ -50,101 +49,101 @@ export function useErrorHandling() {
           dataSubject,
           map((x: number) => {
             if (Math.random() * 100 < options.errorRate) {
-              throw new Error(`处理错误: 数据 ${x}`)
+              throw new Error(`处理错误: 数据 ${x}`);
             }
-            return x * 2
+            return x * 2;
           }),
           catchError((error: any) => {
-            callbacks.onError(error)
-            callbacks.onRecover('默认值')
-            return of('默认值')
+            callbacks.onError(error);
+            callbacks.onRecover('默认值');
+            return of('默认值');
           }),
           subscribe((value: any) => {
-            callbacks.onSuccess(value)
+            callbacks.onSuccess(value);
           })
-        )
-        break
+        );
+        break;
 
       case 'retry':
-        let retryAttempt = 0
+        let retryAttempt = 0;
         subscription = pipe(
           dataSubject,
           map((x: number) => {
             if (Math.random() * 100 < options.errorRate) {
-              retryAttempt++
-              callbacks.onRetry(retryAttempt)
-              throw new Error(`处理错误: 数据 ${x}`)
+              retryAttempt++;
+              callbacks.onRetry(retryAttempt);
+              throw new Error(`处理错误: 数据 ${x}`);
             }
-            retryAttempt = 0
-            return x * 2
+            retryAttempt = 0;
+            return x * 2;
           }),
           retry(options.retryCount),
           subscribe(
             (value: any) => {
-              callbacks.onSuccess(value)
+              callbacks.onSuccess(value);
             },
             (error: any) => {
-              callbacks.onError(error)
+              callbacks.onError(error);
             }
           )
-        )
-        break
+        );
+        break;
 
       case 'finalize':
         subscription = pipe(
           dataSubject,
           map((x: number) => {
             if (Math.random() * 100 < options.errorRate) {
-              throw new Error(`处理错误: 数据 ${x}`)
+              throw new Error(`处理错误: 数据 ${x}`);
             }
-            return x * 2
+            return x * 2;
           }),
           subscribe(
             (value: any) => {
-              callbacks.onSuccess(value)
+              callbacks.onSuccess(value);
             },
             (error: any) => {
-              callbacks.onError(error)
+              callbacks.onError(error);
               // 模拟 finalize
-              callbacks.onRecover('清理资源')
+              callbacks.onRecover('清理资源');
             }
           )
-        )
-        break
+        );
+        break;
 
       default:
         subscription = pipe(
           dataSubject,
           map((x: number) => {
             if (Math.random() * 100 < options.errorRate) {
-              throw new Error(`处理错误: 数据 ${x}`)
+              throw new Error(`处理错误: 数据 ${x}`);
             }
-            return x * 2
+            return x * 2;
           }),
           subscribe(
             (value: any) => {
-              callbacks.onSuccess(value)
+              callbacks.onSuccess(value);
             },
             (error: any) => {
-              callbacks.onError(error)
+              callbacks.onError(error);
             }
           )
-        )
+        );
     }
-  }
+  };
 
   const stopErrorHandling = () => {
     if (interval) {
-      clearInterval(interval)
-      interval = null
+      clearInterval(interval);
+      interval = null;
     }
     if (subscription && subscription.unsubscribe) {
-      subscription.unsubscribe()
+      subscription.unsubscribe();
     }
-  }
+  };
 
   return {
     startErrorHandling,
     stopErrorHandling
-  }
+  };
 }

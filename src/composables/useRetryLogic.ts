@@ -18,14 +18,6 @@ function mcTimeout(duration: number) {
   return timer(duration);
 }
 
-// 客户端类型
-enum ClientType {
-  LOGIN = 0,
-  GET_DATA = 1,
-  SEND_MESSAGE = 2,
-  UPDATE_PROFILE = 3
-}
-
 interface SendReqOptions {
   timeout?: number;
   retries?: number;
@@ -71,7 +63,7 @@ export function useRetryLogic() {
 
   const sendReq = (
     command: string,
-    data: any = {},
+    _data: any = {},
     options: SendReqOptions = {}
   ): Promise<Response> => {
     const {

@@ -8,7 +8,8 @@
         </n-space>
       </template>
       <n-text>
-        演示 FastRx 的各种操作符，包括转换、过滤、时间操作等。通过可视化的方式展示数据流的变化过程。
+        演示 FastRx
+        的各种操作符，包括转换、过滤、时间操作等。通过可视化的方式展示数据流的变化过程。
       </n-text>
     </n-card>
 
@@ -22,9 +23,9 @@
               placeholder="选择操作符"
               @update:value="runOperatorDemo"
             />
-            
+
             <n-divider />
-            
+
             <n-form-item label="输入间隔 (ms)">
               <n-input-number
                 v-model:value="inputInterval"
@@ -34,7 +35,7 @@
                 style="width: 100%"
               />
             </n-form-item>
-            
+
             <n-form-item label="操作符参数">
               <n-input-number
                 v-model:value="operatorParam"
@@ -43,18 +44,21 @@
                 style="width: 100%"
               />
             </n-form-item>
-            
-            <n-button type="primary" @click="startDemo" :loading="isRunning" block>
-              {{ isRunning ? '运行中...' : '开始演示' }}
+
+            <n-button
+              type="primary"
+              @click="startDemo"
+              :loading="isRunning"
+              block
+            >
+              {{ isRunning ? "运行中..." : "开始演示" }}
             </n-button>
-            
+
             <n-button @click="stopDemo" :disabled="!isRunning" block>
               停止演示
             </n-button>
-            
-            <n-button @click="clearResults" block>
-              清空结果
-            </n-button>
+
+            <n-button @click="clearResults" block> 清空结果 </n-button>
           </n-space>
         </n-card>
       </n-grid-item>
@@ -76,12 +80,12 @@
                   </div>
                 </div>
               </div>
-              
+
               <div class="operator-arrow">
                 <n-icon size="20">⬇️</n-icon>
-                <span>{{ selectedOperator || '选择操作符' }}</span>
+                <span>{{ selectedOperator || "选择操作符" }}</span>
               </div>
-              
+
               <div class="stream-row">
                 <div class="stream-label">输出流:</div>
                 <div class="stream-line">
@@ -113,7 +117,7 @@
                 </div>
               </n-card>
             </n-grid-item>
-            
+
             <n-grid-item>
               <n-card title="输出数据">
                 <div class="data-list">
@@ -136,7 +140,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref } from "vue";
 import {
   NSpace,
   NCard,
@@ -149,112 +153,112 @@ import {
   NDivider,
   NTag,
   NText,
-  NIcon
-} from 'naive-ui'
-import { useOperators } from '../composables/useOperators'
+  NIcon,
+} from "naive-ui";
+import { useOperators } from "../composables/useOperators";
 
-const selectedOperator = ref<string>('')
-const inputInterval = ref(1000)
-const operatorParam = ref(2)
-const isRunning = ref(false)
+const selectedOperator = ref<string>("");
+const inputInterval = ref(1000);
+const operatorParam = ref(2);
+const isRunning = ref(false);
 
 const operatorOptions = [
-  { label: 'map - 映射变换', value: 'map' },
-  { label: 'filter - 过滤', value: 'filter' },
-  { label: 'take - 取前N个', value: 'take' },
-  { label: 'skip - 跳过前N个', value: 'skip' },
-  { label: 'debounceTime - 防抖', value: 'debounceTime' },
-  { label: 'throttle - 节流', value: 'throttle' },
-  { label: 'scan - 累积', value: 'scan' },
-  { label: 'switchMap - 切换映射', value: 'switchMap' }
-]
+  { label: "map - 映射变换", value: "map" },
+  { label: "filter - 过滤", value: "filter" },
+  { label: "take - 取前N个", value: "take" },
+  { label: "skip - 跳过前N个", value: "skip" },
+  { label: "debounceTime - 防抖", value: "debounceTime" },
+  { label: "throttle - 节流", value: "throttle" },
+  { label: "scan - 累积", value: "scan" },
+  { label: "switchMap - 切换映射", value: "switchMap" },
+];
 
-const inputStream = ref<any[]>([])
-const outputStream = ref<any[]>([])
-const inputData = ref<any[]>([])
-const outputData = ref<any[]>([])
+const inputStream = ref<any[]>([]);
+const outputStream = ref<any[]>([]);
+const inputData = ref<any[]>([]);
+const outputData = ref<any[]>([]);
 
-const { runOperator, stopOperator } = useOperators()
+const { runOperator, stopOperator } = useOperators();
 
-let demoInterval: number | null = null
-let inputCounter = 0
-let animationStartTime = 0
+let demoInterval: number | null = null;
+let inputCounter = 0;
+let animationStartTime = 0;
 
 const addInputItem = (value: any) => {
-  const timestamp = new Date().toLocaleTimeString()
-  const id = Date.now() + Math.random()
-  
+  const timestamp = new Date().toLocaleTimeString();
+  const id = Date.now() + Math.random();
+
   // 添加到数据列表
-  inputData.value.unshift({ id, value, timestamp })
-  if (inputData.value.length > 20) inputData.value.pop()
-  
+  inputData.value.unshift({ id, value, timestamp });
+  if (inputData.value.length > 20) inputData.value.pop();
+
   // 添加到可视化流
-  const position = (Date.now() - animationStartTime) / 50 % 600
-  inputStream.value.push({ id, value, position })
-  
+  const position = ((Date.now() - animationStartTime) / 50) % 600;
+  inputStream.value.push({ id, value, position });
+
   // 清理旧的流项目
   setTimeout(() => {
-    inputStream.value = inputStream.value.filter(item => item.id !== id)
-  }, 3000)
-}
+    inputStream.value = inputStream.value.filter((item) => item.id !== id);
+  }, 3000);
+};
 
 const addOutputItem = (value: any) => {
-  const timestamp = new Date().toLocaleTimeString()
-  const id = Date.now() + Math.random()
-  
+  const timestamp = new Date().toLocaleTimeString();
+  const id = Date.now() + Math.random();
+
   // 添加到数据列表
-  outputData.value.unshift({ id, value, timestamp })
-  if (outputData.value.length > 20) outputData.value.pop()
-  
+  outputData.value.unshift({ id, value, timestamp });
+  if (outputData.value.length > 20) outputData.value.pop();
+
   // 添加到可视化流
-  const position = (Date.now() - animationStartTime) / 50 % 600
-  outputStream.value.push({ id, value, position })
-  
+  const position = ((Date.now() - animationStartTime) / 50) % 600;
+  outputStream.value.push({ id, value, position });
+
   // 清理旧的流项目
   setTimeout(() => {
-    outputStream.value = outputStream.value.filter(item => item.id !== id)
-  }, 3000)
-}
+    outputStream.value = outputStream.value.filter((item) => item.id !== id);
+  }, 3000);
+};
 
 const startDemo = () => {
-  if (!selectedOperator.value) return
-  
-  isRunning.value = true
-  inputCounter = 0
-  animationStartTime = Date.now()
-  
+  if (!selectedOperator.value) return;
+
+  isRunning.value = true;
+  inputCounter = 0;
+  animationStartTime = Date.now();
+
   // 启动操作符演示
-  runOperator(selectedOperator.value, operatorParam.value, addOutputItem)
-  
+  runOperator(selectedOperator.value, operatorParam.value, addOutputItem);
+
   // 定期产生输入数据
   demoInterval = setInterval(() => {
-    const value = ++inputCounter
-    addInputItem(value)
-  }, inputInterval.value)
-}
+    const value = ++inputCounter;
+    addInputItem(value);
+  }, inputInterval.value);
+};
 
 const stopDemo = () => {
-  isRunning.value = false
+  isRunning.value = false;
   if (demoInterval) {
-    clearInterval(demoInterval)
-    demoInterval = null
+    clearInterval(demoInterval);
+    demoInterval = null;
   }
-  stopOperator()
-}
+  stopOperator();
+};
 
 const clearResults = () => {
-  inputStream.value = []
-  outputStream.value = []
-  inputData.value = []
-  outputData.value = []
-}
+  inputStream.value = [];
+  outputStream.value = [];
+  inputData.value = [];
+  outputData.value = [];
+};
 
 const runOperatorDemo = () => {
   if (isRunning.value) {
-    stopDemo()
+    stopDemo();
   }
-  clearResults()
-}
+  clearResults();
+};
 </script>
 
 <style scoped>
