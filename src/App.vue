@@ -116,6 +116,11 @@ const menuOptions: MenuOption[] = [
     key: "ErrorHandling",
     icon: () => "🛡️",
   },
+  {
+    label: "重连逻辑演示",
+    key: "Reconnect",
+    icon: () => "🔌",
+  },
 ];
 
 const currentPageTitle = computed(() => {

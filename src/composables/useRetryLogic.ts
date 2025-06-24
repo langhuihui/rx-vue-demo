@@ -106,8 +106,6 @@ export function useRetryLogic() {
             resolve(result);
           },
           (error: any) => {
-            debugger;
-            console.log('error', error);
             if (error instanceof TimeoutError) {
               onTimeout?.();
             }
